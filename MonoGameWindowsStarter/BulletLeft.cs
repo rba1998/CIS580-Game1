@@ -12,7 +12,7 @@ namespace MonoGameWindowsStarter
     {
         Game1 game;
 
-        public BoundingRectangle bounds;
+        public BoundingRectangle Bounds;
 
         Texture2D texture;
 
@@ -20,20 +20,20 @@ namespace MonoGameWindowsStarter
         {
             this.game = game;
             this.texture = texture2d;
-            bounds.Width = 16;
-            bounds.Height = 87;
-            bounds.X = player.bounds.X + 30;
-            bounds.Y = player.bounds.Y - 32;
+            Bounds.Width = 16;
+            Bounds.Height = 87;
+            Bounds.X = player.Bounds.X + 30;
+            Bounds.Y = player.Bounds.Y - 32;
         }
 
         public void Draw( SpriteBatch spriteBatch )
         {
-            spriteBatch.Draw( texture, bounds, Color.White );
+            spriteBatch.Draw( texture, Bounds, Color.White );
         }
 
         public void Update( GameTime gameTime )
         {
-            bounds.Y -= 20;
+            Bounds.Y -= 20;
         }
     }
 }

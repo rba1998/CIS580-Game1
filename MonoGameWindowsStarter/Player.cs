@@ -14,13 +14,13 @@ namespace MonoGameWindowsStarter
     {
         Game1 game;
 
-        public BoundingRectangle bounds;
+        public BoundingRectangle Bounds;
 
         Texture2D texturePlayer;
         Texture2D textureBullet;
 
-        List<BulletLeft> bulletLefts;
-        List<BulletRight> bulletRights;
+        public List<BulletLeft> bulletLefts;
+        public List<BulletRight> bulletRights;
 
         // The higher this variable, the slower the ship fires
         UInt16 bulletDelay;
@@ -40,76 +40,79 @@ namespace MonoGameWindowsStarter
         {
             texturePlayer = content.Load<Texture2D>("Player");
             textureBullet = content.Load<Texture2D>("Bullet");
-            bounds.Width = 96;
-            bounds.Height = 98;
-            bounds.X = game.GraphicsDevice.Viewport.Width / 2 - bounds.Width / 2;
-            bounds.Y = game.GraphicsDevice.Viewport.Height - bounds.Height;
+            Bounds.Width = 96;
+            Bounds.Height = 98;
+            Bounds.X = game.GraphicsDevice.Viewport.Width / 2 - Bounds.Width / 2;
+            Bounds.Y = game.GraphicsDevice.Viewport.Height - Bounds.Height;
         }
 
         public void Update( GameTime gameTime )
         {
-            /*-------------------------
-             * Player ship movement
-            -------------------------*/
-            var keyboardState = Keyboard.GetState();
-            if ( keyboardState.IsKeyDown( Keys.Left ) )
+            if (!game.Gameover)
             {
-                bounds.X -= (float)gameTime.ElapsedGameTime.TotalMilliseconds - 5;
-            }
-
-            if ( keyboardState.IsKeyDown( Keys.Right ) )
-            {
-                bounds.X += (float)gameTime.ElapsedGameTime.TotalMilliseconds - 5;
-            }
-
-            /*-------------------------
-             * Player ship main firing
-            -------------------------*/
-            if ( keyboardState.IsKeyDown( Keys.Z ) && bulletDelayCounter == 0 )
-            {
-                BulletLeft bulletl = new BulletLeft( game, textureBullet, this );
-                BulletRight bulletr = new BulletRight( game, textureBullet, this );
-                bulletLefts.Add( bulletl );
-                bulletRights.Add( bulletr );
-                bulletDelayCounter = bulletDelay;
-            }
-            else if ( bulletDelayCounter != 0 )
-            {
-                // Ensures shots aren't produced every frame while key is held.
-                bulletDelayCounter--;
-            }
-
-            /*-------------------------
-             * Keep ship on screen
-            -------------------------*/
-            if ( bounds.X < 0 )
-            {
-                bounds.X = 0;
-            }
-            if ( bounds.X > game.GraphicsDevice.Viewport.Width - bounds.Width )
-            {
-                bounds.X = game.GraphicsDevice.Viewport.Width - bounds.Width;
-            }
-
-            /*-------------------------
-             * Update bullets, removing them if necessary
-            -------------------------*/
-            for ( int i = 0; i < bulletLefts.Count; i++ )
-            {
-                bulletLefts[i].Update( gameTime );
-                
-                if ( bulletLefts[i].bounds.Y <= -87 )
+                /*-------------------------
+                 * Player ship movement
+                -------------------------*/
+                var keyboardState = Keyboard.GetState();
+                if (keyboardState.IsKeyDown(Keys.Left))
                 {
-                    bulletLefts.RemoveAt( i );
+                    Bounds.X -= (float)gameTime.ElapsedGameTime.TotalMilliseconds - 5;
                 }
-            }
-            for ( int i = 0; i < bulletRights.Count; i++ )
-            {
-                bulletRights[ i ].Update( gameTime );
 
-                if ( bulletRights[ i ].bounds.Y <= -87 )
+                if (keyboardState.IsKeyDown(Keys.Right))
                 {
-                    bulletRights.RemoveAt( i );
+                    Bounds.X += (float)gameTime.ElapsedGameTime.TotalMilliseconds - 5;
+                }
+
+                /*-------------------------
+                 * Player ship main firing
+                -------------------------*/
+                if (keyboardState.IsKeyDown(Keys.Z) && bulletDelayCounter == 0)
+                {
+                    BulletLeft bulletl = new BulletLeft(game, textureBullet, this);
+                    BulletRight bulletr = new BulletRight(game, textureBullet, this);
+                    bulletLefts.Add(bulletl);
+                    bulletRights.Add(bulletr);
+                    bulletDelayCounter = bulletDelay;
+                }
+                else if (bulletDelayCounter > 0)
+                {
+                    // Ensures shots aren't produced every frame while key is held.
+                    bulletDelayCounter--;
+                }
+
+                /*-------------------------
+                 * Keep ship on screen
+                -------------------------*/
+                if (Bounds.X < 0)
+                {
+                    Bounds.X = 0;
+                }
+                if (Bounds.X > game.GraphicsDevice.Viewport.Width - Bounds.Width)
+                {
+                    Bounds.X = game.GraphicsDevice.Viewport.Width - Bounds.Width;
+                }
+
+                /*-------------------------
+                 * Update bullets, removing them if necessary
+                -------------------------*/
+                for (int i = 0; i < bulletLefts.Count; i++)
+                {
+                    bulletLefts[i].Update(gameTime);
+
+                    if (bulletLefts[i].Bounds.Y <= -87)
+                    {
+                        bulletLefts.RemoveAt(i);
+                    }
+                }
+                for (int i = 0; i < bulletRights.Count; i++)
+                {
+                    bulletRights[i].Update(gameTime);
+
+                    if (bulletRights[i].Bounds.Y <= -87)
+                    {
+                        bulletRights.RemoveAt(i);
+                    }
                 }
             }
         }
@@ -119,7 +122,7 @@ namespace MonoGameWindowsStarter
             /*-------------------------
              * Draw player ship
             -------------------------*/
-            spriteBatch.Draw( texturePlayer, bounds, Color.White );
+            spriteBatch.Draw( texturePlayer, Bounds, Color.White );
 
             /*-------------------------
              * Draw left and right bullets
