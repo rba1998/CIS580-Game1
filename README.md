@@ -1,6 +1,6 @@
 # CIS580-Game1
 
-~~Attack of the Pugs~~
+Attack of the Pugs
 
 Disclaimer: No pugs were harmed in the making of this game. All lasers fired from the player ship
             are only teleporting the hit pugs to a safe, faraway location with plenty of treats for them.
