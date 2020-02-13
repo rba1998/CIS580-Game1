@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Audio;
 using System.Windows;
 
 namespace MonoGameWindowsStarter
@@ -24,6 +25,7 @@ namespace MonoGameWindowsStarter
         UInt32 score;
 
         Texture2D textureEnemy;
+        Texture2D textureExplosion;
 
         KeyboardState oldKeyboardState;
         KeyboardState newKeyboardState;
@@ -33,20 +35,30 @@ namespace MonoGameWindowsStarter
 
         List<EnemyBasic> enemyBasics;
 
+        List<Explosion> explosions;
+
         private SpriteFont font;
 
         public bool Gameover;
+
+        List<SoundEffect> sfx;
+
+        private Dictionary<string, Animation> animations;
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            player = new Player( this );
+            sfx = new List<SoundEffect>();
+            SoundEffect.MasterVolume = 0.1f;
+            player = new Player( this, sfx );
             enemySpawnDelay = 100;
             enemySpawnCounter = 0;
             enemyBasics = new List<EnemyBasic>();
+            explosions = new List<Explosion>();
             score = 0;
             Gameover = false;
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
         }
 
         /// <summary>
@@ -75,8 +87,18 @@ namespace MonoGameWindowsStarter
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             textureEnemy = Content.Load<Texture2D>( "pug" );
+            textureExplosion = Content.Load<Texture2D>( "explosion" );
 
             font = Content.Load<SpriteFont>( "FontArial" );
+
+            sfx.Add( Content.Load<SoundEffect>( "shootLaser" ) );
+            sfx.Add( Content.Load<SoundEffect>( "shootEnemyLaser" ) );
+            sfx.Add( Content.Load<SoundEffect>( "explosionEnemy" ) );
+
+            animations = new Dictionary<string, Animation>()
+            {
+                { "Explosion", new Animation( textureExplosion, 100 ) }
+            };
 
             player.LoadContent( Content );
             // TODO: use this.Content to load your game content here
@@ -136,6 +158,10 @@ namespace MonoGameWindowsStarter
             {
                 if (CollidesWith(enemyBasics[i].Bounds, player.Bounds))
                 {
+                    if ( !Gameover )
+                    {
+                        sfx[ 1 ].Play();
+                    }
                     Gameover = true;
                 }
                 for ( int j = 0; j < player.bulletLefts.Count; j++ )
@@ -156,8 +182,22 @@ namespace MonoGameWindowsStarter
                 }
                 if( enemyBasics[ i ].Health <= 0 )
                 {
-                    enemyBasics.RemoveAt( i );
+                    SoundEffect.MasterVolume = 0.5f;
+                    sfx[ 2 ].Play();
+                    SoundEffect.MasterVolume = 0.1f;
+                    explosions.Add( new Explosion( this, animations, enemyBasics[ i ].Bounds.X, enemyBasics[ i ].Bounds.Y ) );
                     score++;
+                    enemyBasics.RemoveAt(i);
+                }
+            }
+
+            // Explosion timers
+            for ( int i = 0; i < explosions.Count; i++ )
+            {
+                explosions[ i ].timer--;
+                if ( explosions[ i ].timer <= 0 )
+                {
+                    explosions.RemoveAt( i );
                 }
             }
 
@@ -169,22 +209,27 @@ namespace MonoGameWindowsStarter
         /// This is called when the game should draw itself.
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
-        protected override void Draw(GameTime gameTime)
+        protected override void Draw( GameTime gameTime )
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
 
-            foreach (EnemyBasic eb in enemyBasics)
+            foreach ( EnemyBasic eb in enemyBasics )
             {
-                eb.Draw(spriteBatch);
+                eb.Draw( spriteBatch );
             }
 
-            if (!Gameover) // If the game is still in play
+            foreach ( Explosion e in explosions )
+            {
+                e.Draw( spriteBatch );
+            }
+
+            if ( !Gameover ) // If the game is still in play
             {
                 player.Draw(spriteBatch);
-                spriteBatch.DrawString(font, "Score: " + score, new Vector2(10, 10), Color.Black);
+                spriteBatch.DrawString( font, "Score: " + score, new Vector2(10, 10), Color.Black );
             }
             else // If the game has ended
             {
@@ -193,7 +238,7 @@ namespace MonoGameWindowsStarter
             
             spriteBatch.End();
 
-            base.Draw(gameTime);
+            base.Draw( gameTime );
         }
 
         public static bool CollidesWith( BoundingRectangle a, BoundingRectangle b )

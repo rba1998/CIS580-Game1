@@ -41,10 +41,13 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Animation.cs" />
+    <Compile Include="AnimationManager.cs" />
     <Compile Include="BoundingRectangle.cs" />
     <Compile Include="BulletLeft.cs" />
     <Compile Include="BulletRight.cs" />
     <Compile Include="EnemyBasic.cs" />
+    <Compile Include="Explosion.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />

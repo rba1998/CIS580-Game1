@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Audio;
 
 namespace MonoGameWindowsStarter
 {
@@ -27,9 +28,12 @@ namespace MonoGameWindowsStarter
 
         UInt16 bulletDelayCounter;
 
-        public Player( Game1 game )
+        List<SoundEffect> sfx;
+
+        public Player( Game1 game, List<SoundEffect> sfx )
         {
             this.game = game;
+            this.sfx = sfx;
             bulletLefts = new List<BulletLeft>();
             bulletRights = new List<BulletRight>();
             bulletDelay = 3;
@@ -74,6 +78,7 @@ namespace MonoGameWindowsStarter
                     bulletLefts.Add(bulletl);
                     bulletRights.Add(bulletr);
                     bulletDelayCounter = bulletDelay;
+                    sfx[ 0 ].Play();
                 }
                 else if (bulletDelayCounter > 0)
                 {
