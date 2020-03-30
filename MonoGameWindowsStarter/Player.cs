@@ -14,21 +14,20 @@ namespace MonoGameWindowsStarter
     public class Player
     {
         Game1 game;
-
         public BoundingRectangle Bounds;
-
         Texture2D texturePlayer;
         Texture2D textureBullet;
-
         public List<BulletLeft> bulletLefts;
         public List<BulletRight> bulletRights;
+        List<SoundEffect> sfx;
+        ParticleSystem particleSystem;
+        Texture2D particleTexture;
+        Random random;
 
         // The higher this variable, the slower the ship fires
         UInt16 bulletDelay;
 
         UInt16 bulletDelayCounter;
-
-        List<SoundEffect> sfx;
 
         public Player( Game1 game, List<SoundEffect> sfx )
         {
@@ -38,6 +37,7 @@ namespace MonoGameWindowsStarter
             bulletRights = new List<BulletRight>();
             bulletDelay = 3;
             bulletDelayCounter = 0;
+            random = new Random();
         }
 
         public void LoadContent( ContentManager content )
@@ -48,6 +48,39 @@ namespace MonoGameWindowsStarter
             Bounds.Height = 98;
             Bounds.X = game.GraphicsDevice.Viewport.Width / 2 - Bounds.Width / 2;
             Bounds.Y = game.GraphicsDevice.Viewport.Height - Bounds.Height;
+
+            // Firing particle system
+            particleTexture = content.Load<Texture2D>("particle");
+            particleSystem = new ParticleSystem(game.GraphicsDevice, 1000, particleTexture);
+            particleSystem.Emitter = new Vector2(100, 100);
+            particleSystem.SpawnPerFrame = 4;
+            particleSystem.boolSpawn = false;
+
+            // Set the SpawnParticle method
+            particleSystem.SpawnParticle = (ref Particle particle) =>
+            {
+                if (particleSystem.boolSpawn)
+                {
+                    particle.Position = new Vector2(Bounds.X + (Bounds.Width / 2) - 10, Bounds.Y);
+                    particle.Velocity = new Vector2(
+                        MathHelper.Lerp(-50, 50, (float)random.NextDouble()), // X between -50 and 50
+                        MathHelper.Lerp(-100, -200, (float)random.NextDouble()) // Y between 0 and 100
+                        );
+                    particle.Acceleration = -0.1f * new Vector2(0, (float)-random.NextDouble());
+                    particle.Color = Color.Yellow;
+                    particle.Scale = 1f;
+                    particle.Life = 0.2f;
+                }
+            };
+
+            // Set the UpdateParticle method
+            particleSystem.UpdateParticle = (float deltaT, ref Particle particle) =>
+            {
+                particle.Velocity += deltaT * particle.Acceleration;
+                particle.Position += deltaT * particle.Velocity;
+                particle.Scale -= deltaT;
+                particle.Life -= deltaT;
+            };
         }
 
         public void Update( GameTime gameTime )
@@ -79,6 +112,7 @@ namespace MonoGameWindowsStarter
                     bulletRights.Add(bulletr);
                     bulletDelayCounter = bulletDelay;
                     sfx[ 0 ].Play();
+                    particleSystem.boolSpawn = true;
                 }
                 else if (bulletDelayCounter > 0)
                 {
@@ -120,6 +154,9 @@ namespace MonoGameWindowsStarter
                     }
                 }
             }
+
+            particleSystem.Update( gameTime );
+            particleSystem.boolSpawn = false;
         }
 
         public void Draw( SpriteBatch spriteBatch )
@@ -137,6 +174,8 @@ namespace MonoGameWindowsStarter
                 bulletLefts[ i ].Draw( spriteBatch );
                 bulletRights[ i ].Draw( spriteBatch );
             }
+
+            particleSystem.Draw();
         }
     }
 }

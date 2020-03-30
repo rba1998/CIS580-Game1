@@ -19,31 +19,26 @@ namespace MonoGameWindowsStarter
     {
         public GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-
         Player player;
-
         UInt32 score;
-
         Texture2D textureEnemy;
         Texture2D textureExplosion;
-
         KeyboardState oldKeyboardState;
         KeyboardState newKeyboardState;
-
         UInt32 enemySpawnDelay;
         UInt32 enemySpawnCounter;
-
         List<EnemyBasic> enemyBasics;
-
         List<Explosion> explosions;
-
         private SpriteFont font;
-
         public bool Gameover;
-
         List<SoundEffect> sfx;
-
         private Dictionary<string, Animation> animations;
+        ParticleSystem particleSystem;
+        ParticleSystem particleSystemEnemy;
+        Texture2D particleTexture;
+        Texture2D particleTextureEnemy;
+        Random random;
+        float enemySpawnX;
 
         public Game1()
         {
@@ -59,6 +54,8 @@ namespace MonoGameWindowsStarter
             score = 0;
             Gameover = false;
             graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            random = new Random();
+            enemySpawnX = 0;
         }
 
         /// <summary>
@@ -101,7 +98,64 @@ namespace MonoGameWindowsStarter
             };
 
             player.LoadContent( Content );
-            // TODO: use this.Content to load your game content here
+
+            // Particle System: Engine Exhaust
+            particleTexture = Content.Load<Texture2D>("particle");
+            particleSystem = new ParticleSystem(this.GraphicsDevice, 1000, particleTexture);
+            particleSystem.Emitter = new Vector2(100, 100);
+            particleSystem.SpawnPerFrame = 4;
+
+            // Set the SpawnParticle method
+            particleSystem.SpawnParticle = (ref Particle particle) =>
+            {
+                particle.Position = new Vector2(player.Bounds.X + (player.Bounds.Width / 2) - 10, player.Bounds.Y + player.Bounds.Height - 20);
+                particle.Velocity = new Vector2(
+                    MathHelper.Lerp(-50, 50, (float)random.NextDouble()), // X between -50 and 50
+                    MathHelper.Lerp(0, 100, (float)random.NextDouble()) // Y between 0 and 100
+                    );
+                particle.Acceleration = 0.1f * new Vector2(0, (float)-random.NextDouble());
+                particle.Color = Color.Red;
+                particle.Scale = 1f;
+                particle.Life = 1.0f;
+            };
+
+            // Set the UpdateParticle method
+            particleSystem.UpdateParticle = (float deltaT, ref Particle particle) =>
+            {
+                particle.Velocity += deltaT * particle.Acceleration;
+                particle.Position += deltaT * particle.Velocity;
+                particle.Scale -= deltaT;
+                particle.Life -= deltaT;
+            };
+
+            // Particle System: Enemy Spawn Location
+            particleTextureEnemy = Content.Load<Texture2D>( "particle" );
+            particleSystemEnemy = new ParticleSystem(this.GraphicsDevice, 1000, particleTextureEnemy);
+            particleSystemEnemy.Emitter = new Vector2(100, 100);
+            particleSystemEnemy.SpawnPerFrame = 1;
+
+            // Set the SpawnParticle method
+            particleSystemEnemy.SpawnParticle = (ref Particle particle) =>
+            {
+                particle.Position = new Vector2(enemySpawnX, -25);
+                particle.Velocity = new Vector2(
+                    MathHelper.Lerp(-50, 50, (float)random.NextDouble()), // X between -50 and 50
+                    MathHelper.Lerp(0, 200, (float)random.NextDouble()) // Y between 0 and 100
+                    );
+                particle.Acceleration = 0.3f * new Vector2(0, (float)-random.NextDouble());
+                particle.Color = Color.DarkRed;
+                particle.Scale = 3.0f;
+                particle.Life = 0.5f;
+            };
+
+            // Set the UpdateParticle method
+            particleSystemEnemy.UpdateParticle = (float deltaT, ref Particle particle) =>
+            {
+                particle.Velocity += deltaT * particle.Acceleration;
+                particle.Position += deltaT * particle.Velocity;
+                particle.Scale -= deltaT;
+                particle.Life -= deltaT;
+            };
         }
 
         /// <summary>
@@ -134,6 +188,7 @@ namespace MonoGameWindowsStarter
                 EnemyBasic enemy = new EnemyBasic( this );
                 enemy.LoadContent( Content );
                 enemyBasics.Add( enemy );
+                enemySpawnX = enemy.Bounds.X + (enemy.Bounds.Width / 2);
                 enemySpawnCounter = enemySpawnDelay;
                 if ( enemySpawnDelay >= 1 )
                 {
@@ -201,7 +256,11 @@ namespace MonoGameWindowsStarter
                 }
             }
 
+            particleSystem.Update(gameTime);
+            particleSystemEnemy.Update(gameTime);
+
             oldKeyboardState = newKeyboardState;
+
             base.Update(gameTime);
         }
 
@@ -230,6 +289,7 @@ namespace MonoGameWindowsStarter
             {
                 player.Draw(spriteBatch);
                 spriteBatch.DrawString( font, "Score: " + score, new Vector2(10, 10), Color.Black );
+                particleSystem.Draw();
             }
             else // If the game has ended
             {
@@ -237,6 +297,8 @@ namespace MonoGameWindowsStarter
             }
             
             spriteBatch.End();
+
+            particleSystemEnemy.Draw();
 
             base.Draw( gameTime );
         }
